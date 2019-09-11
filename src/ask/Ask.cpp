@@ -3,6 +3,7 @@
 #include <limits>
 #include <iostream>
 #include <algorithm>
+#include <set>
 
 #include "structures/rating/rating.h"
 #include "structures/user/user.h"
@@ -11,62 +12,71 @@
 #include "ask/Ask.h"
 
 namespace ask {
-    const User askUser(const std::vector<User>& options) {
-        for (const User& option : options)
-            std::cout << option;
-        std::cout << "Please select a user ID to predict for.\n";
-
-        unsigned short chosen_id;
-         do {
-            if (!std::cin.good())
-                std::cout << "Type a valid number" << std::endl;
-            else if (chosen_id > options.back().userID)
-                std::cout << "No such id" << std::endl;
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<unsigned>::max(), '\n');
-            std::cin >> chosen_id;
-        } while (!std::cin.good() || chosen_id > options.back().userID);
-        return options[chosen_id];
+    static inline void clearCin() {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<unsigned>::max(), '\n');
     }
 
-    const Movie askMovie(const std::vector<Movie>& options) {
-        std::cout << "Please select a movie.\nOptions:";
-        std::cout << "id\ttitle (genre(s) below each entry)\n";
-        for (const Movie& movie : options)
-            std::cout << movie;
-        std::cout << "Please type the id of the movie: ";
+    const User askUser(const std::unordered_map<unsigned short, User>& options) {
+        unsigned short chosen_id = 1;
+         do {
+            if (!std::cin.good()) {
+                for (const auto& pair : options)
+                    std::cout << pair.second;
+                clearCin();
+            }
+            std::cout << "Please select a user ID to predict for, ";
+            std::cout << "or type any non-numeric, ";
+            std::cout << "to show all users with their id's: ";
+            
+            if (options.find(chosen_id) == options.end())
+                std::cout << "\nNo such id\n" << std::endl;
 
-        unsigned short chosen_id;
-        do {
-            if (!std::cin.good())
-                std::cout << "Type a valid number" << std::endl;
-            else if (chosen_id > options.back().movieID)
-                std::cout << "No such id" << std::endl;
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<unsigned>::max(), '\n');
             std::cin >> chosen_id;
-        } while (!std::cin.good() || chosen_id > options.back().movieID);
-        return options[chosen_id];
+
+        } while (!std::cin.good() || options.find(chosen_id) == options.end());
+        return options.find(chosen_id)->second;
+    }
+
+    const Movie askMovie(const std::unordered_map<unsigned short, Movie>& options) {
+        unsigned short chosen_id = 1;
+        do {
+            if (!std::cin.good()) {
+                for (const auto& pair : options)
+                    std::cout << pair.second;
+                clearCin();
+            }
+            std::cout << "Please type the id of the movie, ";
+            std::cout << "or type any non-numeric, ";
+            std::cout << "to show all movies with their id's: ";
+            if (options.find(chosen_id < 1) == options.end())
+                std::cout << "No such id" << std::endl;
+
+            std::cin >> chosen_id;
+        } while (!std::cin.good() || options.find(chosen_id) == options.end());
+        return options.find(chosen_id)->second;
     }
 
     unsigned short askRating() {
         std::cout<<"On a range of [1-5] (inclusive), how well did you like this movie?"<<std::endl;
         unsigned short r;
         do {
-            if (!std::cin.good())
+            if (!std::cin.good()) {
                 std::cout << "Type a valid number" << std::endl;
+                clearCin();
+            }
             else if (r < 1 || r > 5)
                 std::cout << "Ratings must be between 1 and 5 (inclusive)" << std::endl;
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<unsigned>::max(), '\n');
+
             std::cin >> r;
         } while (!std::cin.good() || r < 1 || r > 5);
         return r;
     }
 
-    const std::vector<Rating> askRatings(const std::vector<Movie>& options) {
-        std::vector<Rating> ratings;
-        std::vector<Movie> local_options = options;
+    const std::set<Rating> askRatings(const std::unordered_map<unsigned short, Movie>& options) {
+        std::set<Rating> ratings;
+        
+        auto local_options = options;
         bool done = false;
         std::cout << "Provide some ratings, so we can run our algorithm." << std::endl;
         while (!done) {
@@ -75,10 +85,10 @@ namespace ask {
             Rating r;
             r.movieID = movie.movieID;
             r.rating = askRating();
-            ratings.push_back(r);
-            std::remove(local_options.begin(), local_options.end(), movie);
+            ratings.insert(r);
+            local_options.erase(movie.movieID);
             
-            std::cout << "Another movie? [Y/n]" << std::endl;
+            std::cout << "Rate another movie? [Y/n]" << std::endl;
             char c;
             std::cin >> c;
             if (c != 'Y' && c != 'y')

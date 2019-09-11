@@ -12,4 +12,5 @@ struct User {
 };
 std::ifstream& operator>>(std::ifstream& in, User& u);
 std::ostream& operator<<(std::ostream& out, const User& u);
+bool operator==(const User& u1, const User& u2);
 #endif

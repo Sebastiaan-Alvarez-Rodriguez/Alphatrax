@@ -13,3 +13,11 @@ std::ostream& operator<<(std::ostream& out, const Rating& r) {
     out << r.userID<<' '<<r.movieID<<' '<<r.rating<<' '<<r.timestamp<<'\n';
     return out;
 }
+
+bool operator<(const Rating& r1, const Rating& r2) {
+    return r1.userID < r2.userID;
+}
+
+bool operator==(const Rating& r1, const Rating& r2) {
+    return r1.userID == r2.userID && r1.movieID == r2.movieID;
+}

@@ -3,6 +3,9 @@
 #include <getopt.h>
 #include <fstream>
 #include <limits>
+#include <algorithm>
+#include <unordered_map>
+#include <numeric>
 
 #include "structures/rating/rating.h"
 #include "structures/user/user.h"
@@ -10,10 +13,11 @@
 
 #include "creator/Creator.h"
 #include "ask/Ask.h"
+#include "container/RatingContainer.h"
 
-std::vector<Rating> ratings;
-std::vector<User> users;
-std::vector<Movie> movies;
+RatingContainer ratings;
+std::unordered_map<unsigned short, User> users;
+std::unordered_map<unsigned short, Movie> movies;
 
 void showHelp(const char *program_name) {
     std::cout << program_name << " [-r <path> -u <path> -m <path>] [-h]" << std::endl;
@@ -32,47 +36,35 @@ void showHelp(const char *program_name) {
 )HERE";
 }
 
-std::vector<Rating> readRatings(std::string r) {    
-    std::vector<Rating> return_vector;
+RatingContainer readRatings(std::string r) {    
+    RatingContainer return_map;
+    std::vector<Rating> tmp;
 
     std::ifstream ratings(r);
     Rating ra;
-    while (ratings>>ra) {
-        return_vector.push_back(ra);
-    }
-    return return_vector;
+    while (ratings>>ra)
+        tmp.push_back(ra);
+    for (auto item : tmp)
+        return_map.add(item);
+    return return_map;
 }
 
-std::vector<User> readUsers(std::string u) {
-    std::vector<User> return_vector;
+std::unordered_map<unsigned short, User> readUsers(std::string u) {
+    std::unordered_map<unsigned short, User> return_map;
     std::ifstream users(u);
     User us;
-    while (users>>us) {
-        return_vector.push_back(us);
-    }
-    return return_vector;
+    while (users>>us)
+        return_map.insert({us.userID, us});
+    return return_map;
 }
 
-std::vector<Movie> readMovies(std::string m) {
-    std::vector<Movie> return_vector;
+std::unordered_map<unsigned short, Movie> readMovies(std::string m) {
+    std::unordered_map<unsigned short, Movie> return_map;
     std::ifstream movies(m);
     Movie mo;
-    while (movies>>mo) {
-        return_vector.push_back(mo);
-    }
-    return return_vector;
-}
-
-
-const std::vector<User> getUsersForMovie(const Movie& movie) {
-    std::vector<User> return_vector;
-    
-    const unsigned short movieID = movie.movieID;
-
-    for (const Rating& r : ratings)
-        if (r.movieID == movieID)
-            return_vector.push_back(users[r.userID]);//todo: id's == pos?
-    return return_vector;
+    while (movies>>mo)
+        return_map.insert({mo.movieID, mo});
+    return return_map;
 }
 
 bool predictForUser() {
@@ -96,20 +88,32 @@ void run(std::string r, std::string u, std::string m) {
     movies = readMovies(m);
     std::cout << " Complete!\n";
 
+    User user;
+    if (predictForUser())
+        user = ask::askUser(users);
+    else
+        user = creator::createUser(std::numeric_limits<unsigned short>::max());
+    
     std::cout << "Which movie to predict for?\n";
     auto movie_predict = ask::askMovie(movies);
-    auto raters = getUsersForMovie(movie_predict);
+    std::unordered_map<unsigned short, Rating> raters = ratings.find(movie_predict)->second; //map: uID -> rating
 
-    User user;
-    if (predictForUser()) {
-        user = ask::askUser(users);
-        // if () if user picked has rated movie_predict, just return that
-    } else {
-        user = creator::createUser(users.back().userID+1);
+    if (raters.find(user.userID) != raters.end()) {
+        std::cout << "User has already seen and rated the movie.\n";
+        std::cout << "User rated movie " 
+        << raters[user.userID].rating << "/5."
+        << std::endl;
+        return;
     }
     
+
     //Predicter
-    
+    double predicted_rating = 0;
+    size_t group_size = raters.size();
+    for (auto pair : raters) {
+        User u = users.find(pair.first)->second;
+        Rating r = pair.second;
+    }
 }
 
 int main(int argc, char** argv) {

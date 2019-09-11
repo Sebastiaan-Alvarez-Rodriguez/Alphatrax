@@ -14,3 +14,7 @@ std::ostream& operator<<(std::ostream& out, const User& u) {
     out<<u.userID<<' '<<(u.gender?"male":"female")<<' '<<u.age<<' '<<u.zip<<'\n';
     return out;
 }
+
+bool operator==(const User& u1, const User& u2) {
+    return u1.userID == u2.userID;
+}
