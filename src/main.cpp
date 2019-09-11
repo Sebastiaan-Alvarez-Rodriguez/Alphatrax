@@ -2,12 +2,20 @@
 #include <string>
 #include <getopt.h>
 #include <fstream>
+#include <limits>
 
-#include "structures/rating.h"
-#include "structures/user.h"
-#include "structures/movie.h"
+#include "structures/rating/rating.h"
+#include "structures/user/user.h"
+#include "structures/movie/movie.h"
 
-static void showHelp(const char *program_name) {
+#include "creator/Creator.h"
+#include "ask/Ask.h"
+
+std::vector<Rating> ratings;
+std::vector<User> users;
+std::vector<Movie> movies;
+
+void showHelp(const char *program_name) {
     std::cout << program_name << " [-r <path> -u <path> -m <path>] [-h]" << std::endl;
     std::cout << R"HERE(
     Required parameters
@@ -24,45 +32,90 @@ static void showHelp(const char *program_name) {
 )HERE";
 }
 
-static void readRatings(std::string r) {    
+std::vector<Rating> readRatings(std::string r) {    
+    std::vector<Rating> return_vector;
+
     std::ifstream ratings(r);
     Rating ra;
     while (ratings>>ra) {
-        // std::cout<<ra;
+        return_vector.push_back(ra);
     }
+    return return_vector;
 }
 
-static void readUsers(std::string u) {
+std::vector<User> readUsers(std::string u) {
+    std::vector<User> return_vector;
     std::ifstream users(u);
     User us;
     while (users>>us) {
-        // std::cout<<us;
+        return_vector.push_back(us);
     }
+    return return_vector;
 }
 
-static void readMovies(std::string m) {
+std::vector<Movie> readMovies(std::string m) {
+    std::vector<Movie> return_vector;
     std::ifstream movies(m);
     Movie mo;
     while (movies>>mo) {
-        // std::cout<<mo;
+        return_vector.push_back(mo);
     }
+    return return_vector;
 }
 
-static void run(std::string r, std::string u, std::string m) {
+
+const std::vector<User> getUsersForMovie(const Movie& movie) {
+    std::vector<User> return_vector;
+    
+    const unsigned short movieID = movie.movieID;
+
+    for (const Rating& r : ratings)
+        if (r.movieID == movieID)
+            return_vector.push_back(users[r.userID]);//todo: id's == pos?
+    return return_vector;
+}
+
+bool predictForUser() {
+    unsigned short option = 0;
+    do {
+        if (option > 1)
+            std::cout << "Please choose 0 or 1.\n";
+        std::cout << "Choose a user to predict for[0], ";
+        std::cout << "or give your own input[1]?\n";
+        std::cin >> option;
+    } while(option > 1);
+    return option == 0;
+}
+
+void run(std::string r, std::string u, std::string m) {
     std::cout << "Reading ratings...";
-    readRatings(r);
+    ratings = readRatings(r);
     std::cout << " Complete!\nReading users...";
-    readUsers(u);
+    users = readUsers(u);
     std::cout << " Complete!\nReading movies...";
-    readMovies(m);
+    movies = readMovies(m);
     std::cout << " Complete!\n";
 
+    std::cout << "Which movie to predict for?\n";
+    auto movie_predict = ask::askMovie(movies);
+    auto raters = getUsersForMovie(movie_predict);
+
+    User user;
+    if (predictForUser()) {
+        user = ask::askUser(users);
+        // if () if user picked has rated movie_predict, just return that
+    } else {
+        user = creator::createUser(users.back().userID+1);
+    }
+    
+    //Predicter
+    
 }
 
 int main(int argc, char** argv) {
     std::string ratings_path, users_path, movies_path;
 
-    static struct option long_options[] = {
+    struct option long_options[] = {
         {"ratings-file", required_argument, NULL, 'r'},
         {"users-file", required_argument, NULL, 'u'},
         {"movies-file", required_argument, NULL, 'm'},

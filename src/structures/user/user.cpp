@@ -1,13 +1,7 @@
-#ifndef USER_H
-#define USER_H
+#include <fstream>
+#include <ostream>
 
-struct User {
-    unsigned short userID;
-    bool gender; //male = True, female = False
-    unsigned short age;
-    unsigned short work;
-    unsigned int zip;
-};
+#include "structures/user/user.h"
 
 std::ifstream& operator>>(std::ifstream& in, User& u) {
     char c, gen;
@@ -16,8 +10,7 @@ std::ifstream& operator>>(std::ifstream& in, User& u) {
     return in;
 }
 
-std::ostream& operator<<(std::ostream& out, User& u) {
+std::ostream& operator<<(std::ostream& out, const User& u) {
     out<<u.userID<<' '<<(u.gender?"male":"female")<<' '<<u.age<<' '<<u.zip<<'\n';
     return out;
 }
-#endif

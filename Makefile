@@ -20,9 +20,9 @@ GREEN  = [1;32m
 YELLOW = [1;33m
 WHITE  = [1;37m
 
-HAVE := $(call find, $(OBJ)/, "*.o")
+# HAVE := $(call find, $(OBJ)/, "*.o")
 TOTAL := $(words $(SRCS) . )
-xoutofy = $(or $(eval PROCESSED := $(PROCESSED) . $(HAVE)),$(info $(WHITE)[$(YELLOW)$(words $(PROCESSED))$(WHITE)/$(YELLOW)$(TOTAL)$(WHITE)] $1$(CLEAR)))
+xoutofy = $(or $(eval PROCESSED := $(PROCESSED) .),$(info $(WHITE)[$(YELLOW)$(words $(PROCESSED))$(WHITE)/$(YELLOW)$(TOTAL)$(WHITE)] $1$(CLEAR)))
 
 MAKEFLAGS = -j
 

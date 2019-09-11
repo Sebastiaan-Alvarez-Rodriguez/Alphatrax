@@ -1,16 +1,6 @@
-#ifndef MOVIE_H
-#define MOVIE_H
-
-#include <string>
-#include <vector>
-
-#include "enums/genre.h"
-
-struct Movie {
-    unsigned short movieID;
-    std::string title;
-    std::vector<Genre> genres;
-};
+#include <fstream>
+#include <ostream>
+#include "structures/movie/movie.h"
 
 std::ifstream& operator>>(std::ifstream& in, Movie &m) {
     m.genres.clear();
@@ -36,11 +26,14 @@ std::ifstream& operator>>(std::ifstream& in, Movie &m) {
     return in;
 }
 
-std::ostream& operator<<(std::ostream& out, Movie& m) {
-    out<<m.movieID<<' '<<m.title;
+std::ostream& operator<<(std::ostream& out, const Movie& m) {
+    out<<m.movieID<<'\t'<<m.title<<"\n\t";
     for (Genre g : m.genres)
         out<<' '<< gts(g);
     out<<'\n';
     return out;
 }
-#endif
+
+bool operator==(const Movie& m1, const Movie& m2) {
+    return m1.movieID == m2.movieID;
+}

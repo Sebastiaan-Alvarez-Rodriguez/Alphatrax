@@ -24,7 +24,7 @@ enum Genre {
     Western
 };
 
-Genre stg(const std::string& s) {
+inline Genre stg(const std::string& s) {
     const static std::unordered_map<std::string, Genre> string_to_genre = 
     {{"Action",Action},
     {"Adventure",Adventure},
@@ -48,7 +48,7 @@ Genre stg(const std::string& s) {
     return string_to_genre.find(s)->second;
 }
 
-const std::string& gts(const Genre& g) {
+inline const std::string& gts(const Genre& g) {
     const static std::unordered_map<Genre, std::string> genre_to_string = 
     {{Action,"Action"},
     {Adventure,"Adventure"},

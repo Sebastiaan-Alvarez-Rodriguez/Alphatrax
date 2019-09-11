@@ -1,12 +1,7 @@
-#ifndef RATING_H
-#define RATING_H
+#include <fstream>
+#include <ostream>
 
-struct Rating {
-    unsigned short userID;
-    unsigned short movieID;
-    unsigned short rating;
-    unsigned timestamp;
-};
+#include "structures/rating/rating.h"
 
 std::ifstream& operator>>(std::ifstream& in, Rating& r) {
     char c;
@@ -14,8 +9,7 @@ std::ifstream& operator>>(std::ifstream& in, Rating& r) {
     return in;
 }
 
-std::ostream& operator<<(std::ostream& out, Rating& r) {
+std::ostream& operator<<(std::ostream& out, const Rating& r) {
     out << r.userID<<' '<<r.movieID<<' '<<r.rating<<' '<<r.timestamp<<'\n';
     return out;
 }
-#endif
