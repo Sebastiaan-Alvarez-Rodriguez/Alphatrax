@@ -13,9 +13,11 @@
 
 #include "creator/Creator.h"
 #include "ask/Ask.h"
-#include "container/RatingContainer.h"
+#include "container/MTU/MovieToUserContainer.h"
+#include "container/UTM/UserToMovieContainer.h"
 
-RatingContainer ratings;
+MovieToUserContainer MTU;
+UserToMovieContainer UTM;
 std::unordered_map<unsigned short, User> users;
 std::unordered_map<unsigned short, Movie> movies;
 
@@ -28,7 +30,7 @@ void showHelp(const char *program_name) {
         --users-file
         -u            path     Location of users-file
         --movies-file
-        -m            path     Location of users-file
+        -m            path     Location of movies-file
 
     Optional paramters
         --help
@@ -36,67 +38,96 @@ void showHelp(const char *program_name) {
 )HERE";
 }
 
-RatingContainer readRatings(std::string r) {    
-    RatingContainer return_map;
-    std::vector<Rating> tmp;
+std::vector<Rating> readRatings(std::string r) {
+    std::vector<Rating> ratings;
 
-    std::ifstream ratings(r);
+    std::ifstream file(r);
     Rating ra;
-    while (ratings>>ra)
-        tmp.push_back(ra);
-    for (auto item : tmp)
-        return_map.add(item);
-    return return_map;
+    while (file>>ra)
+        ratings.push_back(ra);
+
+    for (const Rating& item : ratings)
+        MTU.add(item);
+    return ratings;
 }
 
-std::unordered_map<unsigned short, User> readUsers(std::string u) {
-    std::unordered_map<unsigned short, User> return_map;
-    std::ifstream users(u);
+void readUsers(std::string u) {
+    std::cout << "Reading users...";
+    std::ifstream file(u);
     User us;
-    while (users>>us)
-        return_map.insert({us.userID, us});
-    return return_map;
+    while (file>>us)
+        users.insert({us.userID, us});
+    std::cout << "Complete!\n";
 }
 
-std::unordered_map<unsigned short, Movie> readMovies(std::string m) {
-    std::unordered_map<unsigned short, Movie> return_map;
-    std::ifstream movies(m);
+void readMovies(std::string m) {
+    std::cout << "Reading movies...";
+    std::ifstream file(m);
     Movie mo;
-    while (movies>>mo)
-        return_map.insert({mo.movieID, mo});
-    return return_map;
+    while (file>>mo)
+        movies.insert({mo.movieID, mo});
+    std::cout << "Complete!\n";
 }
 
-bool predictForUser() {
-    unsigned short option = 0;
-    do {
-        if (option > 1)
-            std::cout << "Please choose 0 or 1.\n";
-        std::cout << "Choose a user to predict for[0], ";
-        std::cout << "or give your own input[1]?\n";
-        std::cin >> option;
-    } while(option > 1);
-    return option == 0;
+std::unordered_map<unsigned short, unsigned> getDistances(const User& user, const std::unordered_map<unsigned short, Rating>& raters) {
+    std::unordered_map<unsigned short, unsigned> distances;
+    for (const auto& pair : UTM.find(user)->second) {
+        //for each movie where our user has a rating for
+        Rating user_r = pair.second;
+
+        Movie cur_movie = movies.find(pair.first)->second;
+        //raters = map van alle users voor de to_predict movie naar hun ratings
+        for (const auto& it : raters) {
+            User cur_user = users.find(it.first)->second;
+
+            auto tmp = UTM.find(cur_user)->second;
+            //if cur_user has rated cur_movie too
+            if (tmp.find(cur_movie.movieID) != tmp.end()) {
+                Rating cur_r = tmp.find(cur_movie.movieID)->second;
+                unsigned distance = user_r.rating>cur_r.rating ? user_r.rating-cur_r.rating : cur_r.rating-user_r.rating;
+                if (distances.find(cur_user.userID) != distances.end()) {
+                    distances[cur_user.userID] += distance;
+                    if (distances[cur_user.userID] >= 2)
+                        distances[cur_user.userID] -= 2;
+                } else {
+                    distances[cur_user.userID] = distance + 96;
+                }
+            }
+        }
+    }
+    return distances;
 }
 
-void run(std::string r, std::string u, std::string m) {
-    std::cout << "Reading ratings...";
-    ratings = readRatings(r);
-    std::cout << " Complete!\nReading users...";
-    users = readUsers(u);
-    std::cout << " Complete!\nReading movies...";
-    movies = readMovies(m);
-    std::cout << " Complete!\n";
+double closeness_users(const User& u1, const User& u2) {
+    double oof = 1;
+    if (u1.zip == u2.zip)
+        oof *= 0.9;
+    if (u1.age == u2.age)
+        oof *= 0.8;
+    if (u1.work == u2.work)
+        oof *= 0.9;
+    if (u1.gender == u2.gender)
+        return oof *= 0.9;
+    return oof;
+}
 
-    User user;
-    if (predictForUser())
-        user = ask::askUser(users);
-    else
-        user = creator::createUser(std::numeric_limits<unsigned short>::max());
-    
+void read(std::string u, std::string m) {
+    readUsers(u);
+    readMovies(m);
+
+}
+void run(std::string r) {
+    User user = ask::askUser(users);
+
     std::cout << "Which movie to predict for?\n";
     auto movie_predict = ask::askMovie(movies);
-    std::unordered_map<unsigned short, Rating> raters = ratings.find(movie_predict)->second; //map: uID -> rating
+
+    std::cout << "Reading ratings...";
+    std::vector<Rating> ratings = readRatings(r);
+    //                 userID
+    std::unordered_map<unsigned short, Rating> raters = MTU.find(movie_predict)->second;
+    std::cout << "Complete!\n";
+
 
     if (raters.find(user.userID) != raters.end()) {
         std::cout << "User has already seen and rated the movie.\n";
@@ -106,21 +137,46 @@ void run(std::string r, std::string u, std::string m) {
         return;
     }
     
+    for (const Rating& item : ratings) {
+        if (raters.find(item.userID) != raters.end())
+            UTM.add(item);
+        else if (item.userID == user.userID)
+            UTM.add(item);
+    }
 
     //Predicter
+    //sum algorithm:
+    //rating * closeness
+    //Getting rating closeness:
+    //for each movie where 'user' has a rating for
+    //    for each rater of that movie
+    //        rater_distance += abs_diff(user.rating, rater.rating)
+    //find distance closest to zero
+
     double predicted_rating = 0;
     size_t group_size = raters.size();
-    for (auto pair : raters) {
-        User u = users.find(pair.first)->second;
-        Rating r = pair.second;
-    }
+    const auto& distances = getDistances(user, raters);
+
+
+    unsigned short closest_userID;
+    unsigned closest_val = std::numeric_limits<unsigned>::max();
+    for (const auto& pair : distances)
+        if (pair.second < closest_val) {
+            closest_userID = pair.first;
+            closest_val = pair.second;
+        }
+    const User closest_user = users.find(closest_userID)->second;
+    std::cout << "Closest user is:\n" << closest_user;
+    std::cout << "Distance: " << closest_val << '\n';
+
+    std::cout << "You will like this movie " << MTU.find(movie_predict, closest_user)->second.rating << "/5" << std::endl;
 }
 
 int main(int argc, char** argv) {
     std::string ratings_path, users_path, movies_path;
 
     struct option long_options[] = {
-        {"ratings-file", required_argument, NULL, 'r'},
+        {"MTU-file", required_argument, NULL, 'r'},
         {"users-file", required_argument, NULL, 'u'},
         {"movies-file", required_argument, NULL, 'm'},
         {"help", no_argument, NULL, 'h'}
@@ -152,6 +208,7 @@ int main(int argc, char** argv) {
     argc -= optind;
     argv += optind;
 
-    run(ratings_path, users_path, movies_path);
+    read(users_path, movies_path);
+    run(ratings_path);
     return 0;
 }

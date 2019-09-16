@@ -1,5 +1,5 @@
-#ifndef RATINGCONTAINER_H
-#define RATINGCONTAINER_H
+#ifndef MOVIETOUSERCONTAINER_H
+#define MOVIETOUSERCONTAINER_H
 
 #include <unordered_map>
 
@@ -7,7 +7,7 @@
 #include "structures/user/user.h"
 #include "structures/movie/movie.h"
 
-class RatingContainer {
+class MovieToUserContainer {
 public:
     void add(const Rating& r);
     void remove(const Rating& r);

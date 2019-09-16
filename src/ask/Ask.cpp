@@ -49,7 +49,7 @@ namespace ask {
             std::cout << "Please type the id of the movie, ";
             std::cout << "or type any non-numeric, ";
             std::cout << "to show all movies with their id's: ";
-            if (options.find(chosen_id < 1) == options.end())
+            if (options.find(chosen_id) == options.end())
                 std::cout << "No such id" << std::endl;
 
             std::cin >> chosen_id;
@@ -162,5 +162,17 @@ namespace ask {
         std::string choice;
         std::cin >> choice;
         return choice;
+    }
+
+    bool predictForUser() {
+        unsigned short option = 0;
+        do {
+            if (option > 1)
+                std::cout << "Please choose 0 or 1.\n";
+            std::cout << "Choose a user to predict for[0], ";
+            std::cout << "or give your own input[1]?\n";
+            std::cin >> option;
+        } while(option > 1);
+        return option == 0;
     }
 }

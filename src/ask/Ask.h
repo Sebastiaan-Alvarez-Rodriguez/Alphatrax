@@ -14,6 +14,7 @@ namespace ask {
     std::string askZip();
     const std::set<Rating> askRatings(const std::unordered_map<unsigned short, Movie>& options);
     unsigned short askRating();
+    bool predictForUser();
 
     const User askUser(const std::unordered_map<unsigned short, User>& options);
     const Movie askMovie(const std::unordered_map<unsigned short, Movie>& options);
