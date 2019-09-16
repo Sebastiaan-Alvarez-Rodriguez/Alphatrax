@@ -98,19 +98,6 @@ std::unordered_map<unsigned short, unsigned> getDistances(const User& user, cons
     return distances;
 }
 
-double closeness_users(const User& u1, const User& u2) {
-    double oof = 1;
-    if (u1.zip == u2.zip)
-        oof *= 0.9;
-    if (u1.age == u2.age)
-        oof *= 0.8;
-    if (u1.work == u2.work)
-        oof *= 0.9;
-    if (u1.gender == u2.gender)
-        return oof *= 0.9;
-    return oof;
-}
-
 void read(std::string u, std::string m) {
     readUsers(u);
     readMovies(m);
@@ -144,17 +131,6 @@ void run(std::string r) {
             UTM.add(item);
     }
 
-    //Predicter
-    //sum algorithm:
-    //rating * closeness
-    //Getting rating closeness:
-    //for each movie where 'user' has a rating for
-    //    for each rater of that movie
-    //        rater_distance += abs_diff(user.rating, rater.rating)
-    //find distance closest to zero
-
-    double predicted_rating = 0;
-    size_t group_size = raters.size();
     const auto& distances = getDistances(user, raters);
 
 
@@ -166,8 +142,6 @@ void run(std::string r) {
             closest_val = pair.second;
         }
     const User closest_user = users.find(closest_userID)->second;
-    std::cout << "Closest user is:\n" << closest_user;
-    std::cout << "Distance: " << closest_val << '\n';
 
     std::cout << "You will like this movie " << MTU.find(movie_predict, closest_user)->second.rating << "/5" << std::endl;
 }
