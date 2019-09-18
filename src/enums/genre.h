@@ -49,7 +49,7 @@ inline Genre stg(const std::string& s) {
 }
 
 inline const std::string& gts(const Genre& g) {
-    const static std::unordered_map<Genre, std::string> genre_to_string = 
+    const static std::unordered_map<int, std::string> genre_to_string = 
     {{Action,"Action"},
     {Adventure,"Adventure"},
     {Animation,"Animation"},
