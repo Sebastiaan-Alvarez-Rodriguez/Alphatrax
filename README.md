@@ -2,6 +2,7 @@
 A simple relational graph analyzer to recommend movies.
 Given a dataset of ratings, users and movies, analyzes the relational graphs to determine what user will enjoy what movie.
 
+Analysis is carried out using [MDC Basic Collaborative Filtering](https://en.wikipedia.org/wiki/Collaborative_filtering).
 
 ## Requirements
 The requirements are all of the following:
