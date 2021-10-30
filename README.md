@@ -1,5 +1,6 @@
-# MMS1
-This is a project I had to do for MultiMedia Systems.
+# Alphatrax
+A simple relational graph analyzer to recommend movies.
+Given a dataset of ratings, users and movies, analyzes the relational graphs to determine what user will enjoy what movie.
 
 
 ## Requirements
@@ -7,6 +8,7 @@ The requirements are all of the following:
   * GNU Make
   * GNU Compiler Collection (gcc) 4.8.1 or greater!
   * One dataset of [grouplens](http://www.grouplens.org/)
+
 ## Compilation
 Compile this program by typing `make`, while in the main directory.
 
